@@ -2,6 +2,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
 input, textarea { font: inherit; }
+[hidden] { display: none !important; }
 
 :root {
   --bg:        #ffffff;
@@ -523,53 +524,62 @@ body {
 }
 .lb-close:hover { opacity: 1; }
 
-/* ===== COMMENTS ===== */
-.comments-wrap {
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
-  padding-top: 10px;
-  padding-bottom: 12px;
+/* ===== THREADS / REPLIES ===== */
+
+/* Each thread item wrapper */
+.ti-wrap {
+  /* nothing special — just a container */
 }
 
-.comments-list {
+/* Nested replies indented relative to parent content */
+.replies-section {
+  /* aligned under the col-right (pushed by col-left width) */
+}
+
+.replies-wrap {
+  /* indent replies so their avatars align with parent content */
+  padding-left: 8px;
+}
+
+/* Reply composer row */
+.reply-composer {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 6px;
-  align-items: baseline;
-  font-size: 14px;
-  line-height: 1.45;
-}
-
-.comment-author {
-  font-weight: 700;
-  flex-shrink: 0;
-  font-size: 13px;
-}
-
-.comment-text {
-  flex: 1;
-  word-break: break-word;
-}
-
-.comment-time {
-  font-size: 12px;
-  color: var(--text-3);
-  flex-shrink: 0;
-  margin-left: 4px;
-}
-
-.comment-input-row {
-  display: flex;
-  gap: 8px;
   align-items: center;
+  gap: 10px;
+  padding: 10px 0 14px;
 }
 
+.reply-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 7px 14px;
+  font-size: 14px;
+  outline: none;
+  background: var(--bg-hover);
+  color: var(--text);
+  transition: border-color .15s;
+}
+.reply-input:focus { border-color: #aaa; background: #fff; }
+
+.reply-send {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  opacity: .35;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.reply-send:not(:disabled) { opacity: 1; }
+
+/* Keep "on" state for comment button when composer is open */
+.act-btn.on svg { stroke: var(--text); }
+
+/* Separator between top-level posts */
+.post-card { border-bottom: 1px solid var(--border); }
+.post-card:last-child { border-bottom: none; }
+
+/* ───── OLD comment-input (kept for reference, unused) ───── */
 .comment-input {
   flex: 1;
   border: 1px solid var(--border);
