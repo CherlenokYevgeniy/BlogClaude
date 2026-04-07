@@ -275,8 +275,11 @@ function buildThreadItem(item, depth) {
   const menuBtn = document.createElement('button');
   menuBtn.className = 'post-menu-btn';
   menuBtn.innerHTML = '&middot;&middot;&middot;';
-  menuBtn.title = 'Удалить';
-  menuBtn.addEventListener('click', () => deleteItem(item.id));
+  menuBtn.title = 'Действия';
+  menuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showItemMenu(menuBtn, item.id);
+  });
   head.append(uname, time, menuBtn);
 
   // Body text
@@ -338,48 +341,193 @@ function buildThreadItem(item, depth) {
   commentBtn.addEventListener('click', () => {
     composer.hidden = !composer.hidden;
     commentBtn.classList.toggle('on', !composer.hidden);
-    if (!composer.hidden) setTimeout(() => composer.querySelector('.reply-input').focus(), 30);
+    if (!composer.hidden) setTimeout(() => composer.querySelector('.rc-editor').focus(), 30);
   });
 
   wrap.appendChild(section);
   return wrap;
 }
 
-// ─── Reply composer ───────────────────────────────────────────
+// ─── Reply composer (full rich editor) ───────────────────────
+let _rcCounter = 0;
+
 function buildReplyComposer(parentId, depth, section, commentBtn) {
-  const avSize = depth === 0 ? 26 : 22;
+  const uid = ++_rcCounter;
+  const avSize = depth === 0 ? 28 : 24;
+  let rcPhotos = [];
 
   const wrap = document.createElement('div');
   wrap.className = 'reply-composer';
 
+  // Avatar
   const av = document.createElement('div');
   av.className = 'avatar avatar-me';
   av.style.cssText = `width:${avSize}px;height:${avSize}px;font-size:${Math.round(avSize*0.38)}px;flex-shrink:0`;
   av.textContent = 'Ч';
 
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'reply-input';
-  input.placeholder = 'Ответить...';
-  input.maxLength = 500;
+  // Body
+  const body = document.createElement('div');
+  body.className = 'rc-body';
+
+  // Editor
+  const rcEditor = document.createElement('div');
+  rcEditor.className = 'rc-editor';
+  rcEditor.contentEditable = 'true';
+  rcEditor.dataset.placeholder = 'Ответить...';
+  rcEditor.spellcheck = true;
+
+  // Photo previews
+  const rcPreviews = document.createElement('div');
+  rcPreviews.className = 'rc-previews';
+
+  // Emoji panel
+  const rcEmojiPanel = document.createElement('div');
+  rcEmojiPanel.className = 'emoji-panel rc-emoji-panel';
+  rcEmojiPanel.hidden = true;
+  // reuse same emoji rendering
+  const rcEpSearch = document.createElement('input');
+  rcEpSearch.type = 'text'; rcEpSearch.className = 'ep-search'; rcEpSearch.placeholder = 'Поиск...';
+  const rcEpSearchRow = document.createElement('div');
+  rcEpSearchRow.className = 'ep-search-row'; rcEpSearchRow.appendChild(rcEpSearch);
+  const rcEpCats = document.createElement('div'); rcEpCats.className = 'ep-cats';
+  const rcEpGrid = document.createElement('div'); rcEpGrid.className = 'ep-grid';
+  rcEmojiPanel.append(rcEpSearchRow, rcEpCats, rcEpGrid);
+
+  let rcActiveCat = 0;
+  let rcLastSel = null;
+
+  function buildRcCats() {
+    rcEpCats.innerHTML = '';
+    EMOJI_CATS.forEach((cat, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'ep-cat-btn' + (i === rcActiveCat ? ' on' : '');
+      btn.textContent = cat.icon; btn.title = cat.label;
+      btn.addEventListener('mousedown', e => {
+        e.preventDefault(); rcActiveCat = i; buildRcCats(); fillRcGrid(EMOJI_CATS[i].items);
+      });
+      rcEpCats.appendChild(btn);
+    });
+  }
+  function fillRcGrid(items) {
+    rcEpGrid.innerHTML = '';
+    items.forEach(em => {
+      const btn = document.createElement('button');
+      btn.className = 'ep-emoji'; btn.textContent = em;
+      btn.addEventListener('mousedown', e => { e.preventDefault(); insertRcEmoji(em); });
+      rcEpGrid.appendChild(btn);
+    });
+  }
+  function insertRcEmoji(em) {
+    rcEditor.focus();
+    if (rcLastSel) { const s = window.getSelection(); s.removeAllRanges(); s.addRange(rcLastSel); }
+    document.execCommand('insertText', false, em);
+    onRcInput();
+    const s = window.getSelection();
+    if (s.rangeCount) rcLastSel = s.getRangeAt(0).cloneRange();
+  }
+  rcEpSearch.addEventListener('input', () => {
+    fillRcGrid(rcEpSearch.value.trim() ? EMOJI_CATS.flatMap(c => c.items) : EMOJI_CATS[rcActiveCat].items);
+  });
+
+  // Toolbar
+  const toolbar = document.createElement('div');
+  toolbar.className = 'toolbar rc-toolbar';
+
+  // Photo button
+  const photoLabel = document.createElement('label');
+  photoLabel.className = 't-btn'; photoLabel.title = 'Фото';
+  photoLabel.htmlFor = `rc-photo-${uid}`;
+  photoLabel.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" stroke="none"/><polyline points="21 15 16 10 5 21"/></svg>`;
+  const photoInput2 = document.createElement('input');
+  photoInput2.type = 'file'; photoInput2.accept = 'image/*'; photoInput2.multiple = true;
+  photoInput2.hidden = true; photoInput2.id = `rc-photo-${uid}`;
+  photoInput2.addEventListener('change', async () => {
+    const files = Array.from(photoInput2.files).slice(0, MAX_PHOTOS - rcPhotos.length);
+    for (const f of files) { if (rcPhotos.length >= MAX_PHOTOS) break; rcPhotos.push(await toBase64(f)); }
+    photoInput2.value = '';
+    renderRcPreviews();
+    photoLabel.style.opacity = rcPhotos.length >= MAX_PHOTOS ? '0.35' : '1';
+    photoLabel.style.pointerEvents = rcPhotos.length >= MAX_PHOTOS ? 'none' : '';
+  });
+
+  function renderRcPreviews() {
+    rcPreviews.innerHTML = '';
+    rcPhotos.forEach((src, i) => {
+      const pw = document.createElement('div'); pw.className = 'pw';
+      const img = document.createElement('img'); img.src = src;
+      const btn = document.createElement('button'); btn.className = 'pw-remove'; btn.innerHTML = '&#x2715;';
+      btn.addEventListener('click', () => {
+        rcPhotos.splice(i, 1); renderRcPreviews();
+        photoLabel.style.opacity = rcPhotos.length >= MAX_PHOTOS ? '0.35' : '1';
+        photoLabel.style.pointerEvents = rcPhotos.length >= MAX_PHOTOS ? 'none' : '';
+      });
+      pw.append(img, btn); rcPreviews.appendChild(pw);
+    });
+  }
+
+  // Emoji toggle (wrapped for positioning)
+  const emojiWrap = document.createElement('div'); emojiWrap.className = 'emoji-wrap';
+  const emojiBtn = document.createElement('button');
+  emojiBtn.className = 't-btn'; emojiBtn.title = 'Эмодзи';
+  emojiBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="0.8" fill="currentColor" stroke="none"/><circle cx="15" cy="9" r="0.8" fill="currentColor" stroke="none"/></svg>`;
+  rcEditor.addEventListener('blur', () => { const s = window.getSelection(); if (s.rangeCount) rcLastSel = s.getRangeAt(0).cloneRange(); });
+  emojiBtn.addEventListener('click', () => {
+    if (!rcEmojiPanel.hidden) { rcEmojiPanel.hidden = true; emojiBtn.classList.remove('on'); }
+    else { rcEmojiPanel.hidden = false; emojiBtn.classList.add('on'); buildRcCats(); fillRcGrid(EMOJI_CATS[rcActiveCat].items); }
+  });
+  document.addEventListener('click', e => {
+    if (!rcEmojiPanel.hidden && !rcEmojiPanel.contains(e.target) && !emojiBtn.contains(e.target)) {
+      rcEmojiPanel.hidden = true; emojiBtn.classList.remove('on');
+    }
+  });
+  emojiWrap.append(emojiBtn, rcEmojiPanel);
+
+  // Format buttons
+  const fmtBold = makeFmtBtn('bold', '<b>B</b>', rcEditor);
+  const fmtItalic = makeFmtBtn('italic', '<i>I</i>', rcEditor);
+  const fmtStrike = makeFmtBtn('strikeThrough', '<s>S</s>', rcEditor);
+
+  // Char counter + send
+  const counter = document.createElement('span');
+  counter.className = 'char-counter';
+  counter.textContent = '0 / 500';
 
   const sendBtn = document.createElement('button');
   sendBtn.className = 'reply-send';
   sendBtn.textContent = 'Ответить';
   sendBtn.disabled = true;
 
-  input.addEventListener('input', () => { sendBtn.disabled = !input.value.trim(); });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter' && !sendBtn.disabled) submit(); });
+  function onRcInput() {
+    const len = rcEditor.textContent.length;
+    counter.textContent = `${len} / 500`;
+    counter.className = 'char-counter' + (len >= 500 ? ' over' : len >= 400 ? ' warn' : '');
+    sendBtn.disabled = len === 0;
+  }
+
+  rcEditor.addEventListener('input', onRcInput);
+  rcEditor.addEventListener('keydown', e => {
+    if (rcEditor.textContent.length >= MAX_CHARS && !['Backspace','Delete','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) e.preventDefault();
+  });
+  rcEditor.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
+
   sendBtn.addEventListener('click', submit);
 
+  toolbar.append(photoLabel, photoInput2, emojiWrap, fmtBold, fmtItalic, fmtStrike);
+  const tSep = document.createElement('span'); tSep.className = 't-sep';
+  toolbar.append(tSep, counter, sendBtn);
+
+  body.append(rcEditor, rcPreviews, toolbar);
+  wrap.append(av, body);
+
   function submit() {
-    const text = input.value.trim();
+    const html = rcEditor.innerHTML.trim();
+    const text = rcEditor.textContent.trim();
     if (!text) return;
 
     const reply = {
       id:        Date.now(),
-      html:      escapeHtml(text),
-      photos:    [],
+      html:      sanitize(html),
+      photos:    [...rcPhotos],
       createdAt: new Date().toISOString(),
       likes:     0,
       likedByMe: false,
@@ -393,7 +541,7 @@ function buildReplyComposer(parentId, depth, section, commentBtn) {
     parent.replies.push(reply);
     savePosts(posts);
 
-    // Append new reply into the DOM directly (no full re-render for speed)
+    // Append into DOM without full re-render
     let repliesWrap = section.querySelector('.replies-wrap');
     if (!repliesWrap) {
       repliesWrap = document.createElement('div');
@@ -402,18 +550,60 @@ function buildReplyComposer(parentId, depth, section, commentBtn) {
     }
     repliesWrap.appendChild(buildThreadItem(reply, Math.min(depth + 1, MAX_DEPTH)));
 
-    // Update reply counter on commentBtn
-    const countEl = commentBtn.querySelector('.act-count');
+    // Update counter
     const allPosts = loadPosts();
-    const parentFresh = findById(allPosts, parentId);
-    if (parentFresh) countEl.textContent = countAllReplies(parentFresh) || '';
+    const fresh = findById(allPosts, parentId);
+    if (fresh) commentBtn.querySelector('.act-count').textContent = countAllReplies(fresh) || '';
 
-    input.value = '';
+    // Reset
+    rcEditor.innerHTML = '';
+    rcPhotos = []; renderRcPreviews();
+    counter.textContent = '0 / 500'; counter.className = 'char-counter';
     sendBtn.disabled = true;
+    rcEmojiPanel.hidden = true; emojiBtn.classList.remove('on');
   }
 
-  wrap.append(av, input, sendBtn);
   return wrap;
+}
+
+function makeFmtBtn(cmd, html, targetEditor) {
+  const btn = document.createElement('button');
+  btn.className = 't-btn fmt'; btn.dataset.cmd = cmd; btn.innerHTML = html;
+  btn.addEventListener('mousedown', e => {
+    e.preventDefault(); targetEditor.focus(); document.execCommand(cmd, false, null);
+  });
+  return btn;
+}
+
+// ─── Context menu ────────────────────────────────────────────
+let _activeMenu = null;
+function showItemMenu(anchor, id) {
+  if (_activeMenu) { _activeMenu.remove(); _activeMenu = null; }
+
+  const menu = document.createElement('div');
+  menu.className = 'item-menu';
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'item-menu-btn item-menu-danger';
+  delBtn.textContent = 'Удалить';
+  delBtn.addEventListener('click', () => { menu.remove(); _activeMenu = null; deleteItem(id); });
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'item-menu-btn';
+  cancelBtn.textContent = 'Отмена';
+  cancelBtn.addEventListener('click', () => { menu.remove(); _activeMenu = null; });
+
+  menu.append(delBtn, cancelBtn);
+  anchor.parentElement.style.position = 'relative';
+  anchor.parentElement.appendChild(menu);
+  _activeMenu = menu;
+
+  setTimeout(() => {
+    document.addEventListener('click', function handler() {
+      menu.remove(); _activeMenu = null;
+      document.removeEventListener('click', handler);
+    }, { once: true });
+  }, 10);
 }
 
 // ─── Actions ─────────────────────────────────────────────────

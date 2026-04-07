@@ -604,3 +604,72 @@ body {
 .comment-send:not(:disabled) { opacity: 1; }
 
 .act-btn.on svg { stroke: var(--text); }
+
+/* ===== REPLY COMPOSER (rich) ===== */
+.reply-composer {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 0 14px;
+  border-top: 1px solid var(--border);
+}
+
+.rc-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rc-editor {
+  outline: none;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  min-height: 22px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.rc-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  pointer-events: none;
+}
+
+.rc-previews {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rc-toolbar {
+  margin-top: 2px;
+}
+
+/* ===== ITEM MENU (context) ===== */
+.item-menu {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  z-index: 400;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
+  overflow: hidden;
+  min-width: 160px;
+}
+
+.item-menu-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: background .12s;
+}
+.item-menu-btn:hover { background: var(--bg-hover); }
+.item-menu-danger { color: #e02020; font-weight: 700; }
