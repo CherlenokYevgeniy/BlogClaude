@@ -1,0 +1,235 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: #f0f2f5;
+  color: #1c1e21;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #1c1e21;
+}
+
+/* Compose card */
+.compose-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  margin-bottom: 24px;
+}
+
+.compose-card textarea {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 1rem;
+  line-height: 1.5;
+  min-height: 80px;
+  color: #1c1e21;
+  font-family: inherit;
+}
+
+.compose-card textarea::placeholder { color: #bcc0c4; }
+
+.compose-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.photo-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.photo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: #f0f2f5;
+  color: #65676b;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
+}
+.photo-btn:hover { background: #e4e6eb; }
+.photo-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+.photo-previews {
+  display: flex;
+  gap: 8px;
+}
+
+.preview-wrap {
+  position: relative;
+}
+
+.preview-wrap img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+
+.remove-photo {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #1c1e21;
+  color: #fff;
+  border: none;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.compose-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.char-counter {
+  font-size: 0.8rem;
+  color: #bcc0c4;
+  white-space: nowrap;
+}
+.char-counter.warn { color: #e36209; }
+.char-counter.limit { color: #e03131; }
+
+.publish-btn {
+  padding: 8px 18px;
+  background: #1c1e21;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.publish-btn:hover { background: #333; }
+.publish-btn:disabled { background: #bcc0c4; cursor: not-allowed; }
+
+/* Feed */
+.feed { display: flex; flex-direction: column; gap: 16px; }
+
+.post-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.post-time {
+  font-size: 0.8rem;
+  color: #bcc0c4;
+}
+
+.post-delete {
+  background: none;
+  border: none;
+  color: #bcc0c4;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.15s;
+}
+.post-delete:hover { color: #e03131; }
+
+.post-text {
+  font-size: 0.975rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 12px;
+}
+
+.post-images {
+  display: grid;
+  gap: 6px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.post-images.one { grid-template-columns: 1fr; }
+.post-images.two { grid-template-columns: 1fr 1fr; }
+
+.post-images img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.post-images img:hover { opacity: 0.92; }
+
+/* Lightbox */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.lightbox.open { display: flex; }
+.lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  object-fit: contain;
+}
+.lightbox-close {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 2rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.empty-state {
+  text-align: center;
+  color: #bcc0c4;
+  padding: 40px 0;
+  font-size: 0.9rem;
+}

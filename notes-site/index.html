@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Заметки</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Заметки</h1>
+    </header>
+
+    <div class="compose-card">
+      <textarea
+        id="postText"
+        placeholder="Что у вас на уме? (до 500 символов)"
+        maxlength="500"
+      ></textarea>
+      <div class="compose-footer">
+        <div class="photo-section">
+          <label class="photo-btn" for="photoInput" id="photoLabel">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+            Фото
+          </label>
+          <input type="file" id="photoInput" accept="image/*" multiple hidden />
+          <div class="photo-previews" id="photoPreviews"></div>
+        </div>
+        <div class="compose-right">
+          <span class="char-counter" id="charCounter">0 / 500</span>
+          <button class="publish-btn" id="publishBtn">Опубликовать</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="feed" id="feed"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
