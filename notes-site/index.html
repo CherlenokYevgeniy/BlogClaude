@@ -3,16 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Threads</title>
+  <title>Zheka's Threads</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <!-- Header -->
   <header class="header">
-    <svg class="logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
-      <path d="M141.537 88.988c-1.301-.605-2.649-1.158-4.042-1.657C134.985 59.605 120.264 44 96.438 44c-.122 0-.243 0-.365.001-14.583.097-27.273 6.538-35.028 17.842l13.427 9.224c5.73-8.302 14.9-13.072 21.966-13.072h.313c8.3.056 14.556 2.457 18.593 7.137 2.929 3.384 4.889 8.003 5.856 13.828-7.308-1.243-15.214-1.625-23.684-1.14-23.82 1.394-38.648 15.436-37.652 34.832.498 9.804 5.26 18.226 13.442 23.8 6.926 4.699 15.87 7.003 25.133 6.5 12.867-.694 22.975-5.42 30.035-14.061 5.457-6.682 8.9-15.249 10.388-25.936 6.072 3.663 10.57 8.54 12.763 14.376C156.59 130.4 156.806 147.6 143.607 160.83c-11.58 11.603-25.43 16.72-45.537 16.87-22.29-.167-39.223-7.267-50.377-21.079-10.625-13.102-16.111-32.258-16.305-56.847.194-24.59 5.68-43.745 16.305-56.848 11.154-13.812 28.087-20.912 50.377-21.079 22.463.168 39.711 7.298 51.147 21.163 5.594 6.773 9.78 15.253 12.536 25.256l16.144-4.279c-3.337-12.228-8.685-22.699-16.064-31.228C148.283 17.15 127.754 8.428 99.043 8.22 70.39 8.427 50.104 17.177 35.814 33.956 23.026 49.153 16.394 70.882 16.183 100.85l-.001.023c.212 29.968 6.844 51.697 19.632 66.894 14.29 16.779 34.576 25.529 63.228 25.735 26.359-.212 45.841-7.494 59.006-21.682 16.711-16.738 16.192-37.565 10.677-51.593-4.062-10.379-12.293-18.813-23.914-24.087l-2.174-4.152-.101.063z"/>
-    </svg>
+    <span class="logo-text">Zheka's Threads</span>
   </header>
 
   <main class="main">
@@ -36,15 +34,6 @@
           <!-- Photo previews -->
           <div class="photo-previews" id="photoPreviews"></div>
 
-          <!-- Emoji picker -->
-          <div class="emoji-panel" id="emojiPanel" hidden>
-            <div class="ep-search-row">
-              <input type="text" id="emojiSearch" class="ep-search" placeholder="Поиск..." autocomplete="off" />
-            </div>
-            <div class="ep-cats" id="emojiCats"></div>
-            <div class="ep-grid" id="emojiGrid"></div>
-          </div>
-
           <!-- Toolbar -->
           <div class="toolbar">
             <!-- Photo -->
@@ -57,15 +46,25 @@
             </label>
             <input type="file" id="photoInput" accept="image/*" multiple hidden />
 
-            <!-- Emoji -->
-            <button class="t-btn" id="emojiToggle" title="Эмодзи">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                <circle cx="9" cy="9" r="0.8" fill="currentColor" stroke="none"/>
-                <circle cx="15" cy="9" r="0.8" fill="currentColor" stroke="none"/>
-              </svg>
-            </button>
+            <!-- Emoji (wrapper for absolute positioning) -->
+            <div class="emoji-wrap">
+              <button class="t-btn" id="emojiToggle" title="Эмодзи">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                  <circle cx="9" cy="9" r="0.8" fill="currentColor" stroke="none"/>
+                  <circle cx="15" cy="9" r="0.8" fill="currentColor" stroke="none"/>
+                </svg>
+              </button>
+              <!-- Emoji picker -->
+              <div class="emoji-panel" id="emojiPanel" hidden>
+                <div class="ep-search-row">
+                  <input type="text" id="emojiSearch" class="ep-search" placeholder="Поиск..." autocomplete="off" />
+                </div>
+                <div class="ep-cats" id="emojiCats"></div>
+                <div class="ep-grid" id="emojiGrid"></div>
+              </div>
+            </div>
 
             <!-- Bold -->
             <button class="t-btn fmt" id="btnBold" data-cmd="bold" title="Жирный"><b>B</b></button>

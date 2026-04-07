@@ -173,19 +173,18 @@ function insertEmoji(em) {
   if (sel.rangeCount) lastSel = sel.getRangeAt(0).cloneRange();
 }
 
-emojiToggle.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  // save current selection
+// Save cursor position when editor loses focus
+editor.addEventListener('blur', () => {
   const sel = window.getSelection();
   if (sel.rangeCount) lastSel = sel.getRangeAt(0).cloneRange();
+});
 
-  const hidden = emojiPanel.hidden;
-  emojiPanel.hidden = !hidden;
-  emojiToggle.classList.toggle('on', !hidden === false ? false : true);
-  if (!hidden === false) {
-    // closed
+emojiToggle.addEventListener('click', () => {
+  if (!emojiPanel.hidden) {
+    emojiPanel.hidden = true;
     emojiToggle.classList.remove('on');
   } else {
+    emojiPanel.hidden = false;
     emojiToggle.classList.add('on');
     buildEmojiCats();
     fillGrid(EMOJI_CATS[activeCat].items);
@@ -206,7 +205,7 @@ emojiSearch.addEventListener('input', () => {
 
 // Close emoji panel when clicking outside
 document.addEventListener('click', (e) => {
-  if (!emojiPanel.hidden && !emojiPanel.contains(e.target) && e.target !== emojiToggle) {
+  if (!emojiPanel.hidden && !emojiPanel.contains(e.target) && !emojiToggle.contains(e.target)) {
     emojiPanel.hidden = true;
     emojiToggle.classList.remove('on');
   }
@@ -225,6 +224,7 @@ publishBtn.addEventListener('click', () => {
     createdAt: new Date().toISOString(),
     likes:     0,
     likedByMe: false,
+    comments:  [],
   };
 
   const posts = loadPosts();
@@ -344,28 +344,75 @@ function buildPostCard(post) {
     <span class="act-count">${post.likes > 0 ? post.likes : ''}</span>`;
   likeBtn.addEventListener('click', () => toggleLike(post.id));
 
-  // Comment (decorative)
+  // Comment button
+  const comments = post.comments || [];
   const commentBtn = document.createElement('button');
   commentBtn.className = 'act-btn';
   commentBtn.innerHTML = `
     <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <span class="act-count"></span>`;
+    <span class="act-count">${comments.length > 0 ? comments.length : ''}</span>`;
 
-  // Repost (decorative)
-  const repostBtn = document.createElement('button');
-  repostBtn.className = 'act-btn';
-  repostBtn.innerHTML = `
-    <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-    <span class="act-count"></span>`;
-
-  // Share (decorative)
-  const shareBtn = document.createElement('button');
-  shareBtn.className = 'act-btn';
-  shareBtn.innerHTML = `
-    <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
-
-  actions.append(likeBtn, commentBtn, repostBtn, shareBtn);
+  actions.append(likeBtn, commentBtn);
   colR.appendChild(actions);
+
+  // Comments section (toggled)
+  const commentsWrap = document.createElement('div');
+  commentsWrap.className = 'comments-wrap';
+  commentsWrap.hidden = true;
+
+  // Render existing comments
+  const commentsList = document.createElement('div');
+  commentsList.className = 'comments-list';
+  comments.forEach(c => commentsList.appendChild(buildCommentEl(c)));
+
+  // Comment input row
+  const commentInputRow = document.createElement('div');
+  commentInputRow.className = 'comment-input-row';
+  const commentInput = document.createElement('input');
+  commentInput.type = 'text';
+  commentInput.className = 'comment-input';
+  commentInput.placeholder = 'Написать комментарий...';
+  commentInput.maxLength = 300;
+  const commentSend = document.createElement('button');
+  commentSend.className = 'comment-send';
+  commentSend.textContent = 'Отправить';
+  commentSend.disabled = true;
+  commentInput.addEventListener('input', () => {
+    commentSend.disabled = !commentInput.value.trim();
+  });
+  commentInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !commentSend.disabled) submitComment();
+  });
+  commentSend.addEventListener('click', submitComment);
+
+  function submitComment() {
+    const text = commentInput.value.trim();
+    if (!text) return;
+    const posts = loadPosts();
+    const p = posts.find(x => x.id === post.id);
+    if (!p) return;
+    if (!p.comments) p.comments = [];
+    const c = { id: Date.now(), text, createdAt: new Date().toISOString() };
+    p.comments.push(c);
+    savePosts(posts);
+    commentsList.appendChild(buildCommentEl(c));
+    commentInput.value = '';
+    commentSend.disabled = true;
+    // update count on button
+    const countEl = commentBtn.querySelector('.act-count');
+    countEl.textContent = p.comments.length;
+    post.comments = p.comments;
+  }
+
+  commentInputRow.append(commentInput, commentSend);
+  commentsWrap.append(commentsList, commentInputRow);
+  colR.appendChild(commentsWrap);
+
+  commentBtn.addEventListener('click', () => {
+    commentsWrap.hidden = !commentsWrap.hidden;
+    commentBtn.classList.toggle('on', !commentsWrap.hidden);
+    if (!commentsWrap.hidden) commentInput.focus();
+  });
 
   // Likes text
   if (post.likes > 0) {
@@ -378,6 +425,13 @@ function buildPostCard(post) {
   row.append(colL, colR);
   card.appendChild(row);
   return card;
+}
+
+function buildCommentEl(c) {
+  const el = document.createElement('div');
+  el.className = 'comment-item';
+  el.innerHTML = `<span class="comment-author">${USERNAME}</span><span class="comment-text">${c.text.replace(/</g,'&lt;')}</span><span class="comment-time">${relativeTime(c.createdAt)}</span>`;
+  return el;
 }
 
 function deletePost(id) {
